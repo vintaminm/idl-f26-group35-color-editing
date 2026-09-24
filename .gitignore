@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+*.egg-info/
+
+# Data, weights and run outputs (keep on Drive / PSC, not in git)
+data/
+datasets/
+checkpoints/
+outputs/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.zip
+*.tar
+*.tar.gz
+
+# Secrets
+.env
+*.key
+kaggle.json
+
+# OS
+.DS_Store
