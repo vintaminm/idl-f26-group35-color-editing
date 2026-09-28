@@ -1,0 +1,29 @@
+{
+  "resolution": 512,
+  "batch_size": 8,
+  "lora_rank_default": 16,
+  "training_runs": [
+    {"name": "debug and learning-rate trials", "runs": 6, "steps": 1000, "rank": 16},
+    {"name": "main: hair + clothing, full data, with synthetic target-color pairs", "runs": 1, "steps": 10000, "rank": 16},
+    {"name": "E1: reconstruction only", "runs": 1, "steps": 10000, "rank": 16},
+    {"name": "E2: rank 4", "runs": 1, "steps": 10000, "rank": 4},
+    {"name": "E2: rank 64", "runs": 1, "steps": 10000, "rank": 64},
+    {"name": "E2: 10% and 50% training data", "runs": 2, "steps": 10000, "rank": 16}
+  ],
+  "latent_precompute": {
+    "images": 30000,
+    "regions": 2,
+    "synthetic_colors_per_region": 1,
+    "train_images": 26000,
+    "note": "VAE encodes: one per image, one masked image per region, one recolored target per training image, region and synthetic color"
+  },
+  "evaluation": {
+    "models": 7,
+    "test_images": 500,
+    "regions": 2,
+    "target_colors": 3,
+    "sampler_steps": 30,
+    "classifier_free_guidance": true,
+    "note": "7 models = 6 trained LoRA runs (main, E1, E2 x4) + zero-shot B1; B0 runs on CPU"
+  }
+}
