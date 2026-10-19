@@ -7,7 +7,7 @@ from .pipeline import LORA_TARGETS, _save_adapter
 from .runs import append_jsonl, create_run, finish_run, require_gpu, save_json
 
 
-def load_cache(paths, device):
+def load_cache(paths, device, fraction=1.0):
     import torch
 
     parts = [torch.load(p, map_location="cpu", weights_only=False) for p in paths]
@@ -25,8 +25,15 @@ def load_cache(paths, device):
     }
     for key in ("masks", "masked_latents", "synthetic_latents", "source_prompt", "synthetic_prompt"):
         cache[key] = torch.cat([p[key] for p in parts])
+    records = [r for p in parts for r in p["records"]]
+    if fraction < 1:
+        # cached images are in random order, so the first ones are a random subset
+        keep = cache["sample_image"] < round(fraction * len(cache["image_latents"]))
+        for key in ("sample_image", "masks", "masked_latents", "synthetic_latents", "source_prompt", "synthetic_prompt"):
+            cache[key] = cache[key][keep]
+        records = [r for r, k in zip(records, keep.tolist()) if k]
     cache = {k: v.to(device) for k, v in cache.items()}
-    cache["records"] = [r for p in parts for r in p["records"]]
+    cache["records"] = records
     return cache
 
 
@@ -83,10 +90,10 @@ def train(config, train_paths, val_paths):
     torch.manual_seed(config["seed"])
     gen = torch.Generator(device=device).manual_seed(config["seed"])
 
-    data = load_cache(train_paths, device)
+    data = load_cache(train_paths, device, tr.get("data_fraction", 1.0))
     val = load_cache(val_paths, device)
     n_val = min(tr["val_samples"], len(val["records"]))
-    val_gen = torch.Generator(device=device).manual_seed(config["seed"] + 1)
+    val_gen = torch.Generator(device=device).manual_seed(config["split_seed"] + 1)
     # fixed noise and timesteps so the val curve only moves with the model
     fixed = {
         "idx": torch.randperm(len(val["records"]), generator=val_gen, device=device)[:n_val],
@@ -183,8 +190,12 @@ if __name__ == "__main__":
     parser.add_argument("--train-cache", nargs="+", required=True)
     parser.add_argument("--val-cache", nargs="+", required=True)
     parser.add_argument("--steps", type=int, default=None)
+    parser.add_argument("--seed", type=int, default=None)
     args = parser.parse_args()
     cfg = json.loads(Path(args.config).read_text())
     if args.steps:
         cfg["training"]["steps"] = args.steps
+    if args.seed is not None:
+        cfg["seed"] = args.seed
+        cfg["name"] = f"{cfg['name']}-seed{args.seed}"
     train(cfg, [Path(p) for p in args.train_cache], [Path(p) for p in args.val_cache])
