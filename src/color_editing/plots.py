@@ -10,10 +10,11 @@ def read_jsonl(path):
     return [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
 
 
-def smooth(values, weight=0.9):
+def smooth(values, weight=0.97):
     out, last = [], None
     for v in values:
-        last = v if last is None else weight * last + (1 - weight) * v
+        if v is not None:
+            last = v if last is None else weight * last + (1 - weight) * v
         out.append(last)
     return out
 
@@ -29,7 +30,10 @@ def curves(runs, out):
         train = read_jsonl(Path(run) / "loss.jsonl")
         val = read_jsonl(Path(run) / "val.jsonl")
         steps = [r["step"] for r in train]
-        axes[0].plot(steps, smooth([r["loss"] for r in train]), color=color, label=label)
+        for kind, style in styles.items():
+            if any(r.get(kind) is not None for r in train):
+                axes[0].plot(steps, smooth([r.get(kind) for r in train]), style, color=color,
+                             label=f"{label}, {kind} pairs")
         for kind, style in styles.items():
             axes[1].plot([r["step"] for r in val], [r[kind] for r in val], style, color=color,
                          marker="o", markersize=3, label=f"{label}, {kind} pairs")
