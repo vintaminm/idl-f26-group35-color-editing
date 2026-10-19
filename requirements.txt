@@ -1,7 +1,13 @@
-# Tested with torch 2.6.0 (install torch separately for your CUDA / MPS setup)
-torch>=2.1
+# Python 3.11. Install the target platform's PyTorch build first; see README.
+# A CUDA or CPU local version (for example 2.6.0+cu118) satisfies this pin.
+torch==2.6.0
+torchvision==0.21.0
 diffusers==0.40.0
 peft==0.21.0
 transformers==5.17.0
 accelerate==1.15.0
 safetensors==0.8.0
+
+# Notebook tools used by this project.
+ipykernel==7.4.0
+notebook==7.6.3
