@@ -179,6 +179,43 @@ ignored by Git. To share a completed run, explicitly uncomment its final
 overwrite. Publish the training run to share its `adapter/`, and the comparison
 run to share its images. Original shared data and base weights remain unchanged.
 
+## Full training and evaluation
+
+Batch jobs run the modules in `src/color_editing/` through
+`scripts/psc/run.sbatch` (one L40S, project account, logs in `results/logs/`).
+Submit from the clone root. `configs/main.json` trains on reconstruction plus
+50% synthetic target-color pairs (B0 recolorings captioned with the new
+color); `configs/e1.json` trains on reconstruction only.
+
+Cache latents once (VAE and text encoder are frozen), then train:
+
+```bash
+C="/ocean/projects/cis260330p/$USER/cache"
+R=scripts/psc/run.sbatch
+sbatch -J cache-train0 -t 01:30:00 $R cache --config configs/main.json --split train --shard 0 --num-shards 2 --out $C/train-0.pt
+sbatch -J cache-train1 -t 01:30:00 $R cache --config configs/main.json --split train --shard 1 --num-shards 2 --out $C/train-1.pt
+sbatch -J cache-val -t 00:30:00 $R cache --config configs/main.json --split val --limit 500 --out $C/val.pt
+sbatch -J train-main $R train --config configs/main.json --train-cache $C/train-0.pt $C/train-1.pt --val-cache $C/val.pt
+```
+
+Each training run writes `loss.jsonl` (training loss), `val.jsonl`
+(validation loss with fixed noise and timesteps, on reconstruction and
+synthetic pairs), checkpoints and `adapter/` under `results/`.
+
+Evaluate B0, B1 and any adapters on the same test edits, then plot:
+
+```bash
+sbatch -J eval $R evaluate --config configs/main.json \
+  --adapter main=results/<main run>/adapter e1=results/<e1 run>/adapter
+PYTHONPATH=src .venv/bin/python -m color_editing.plots --out-dir results/figures \
+  --runs main=results/<main run> e1=results/<e1 run> \
+  --eval-run results/<eval run> --methods B0 B1 e1 main
+```
+
+The evaluation writes `cases.json`, generated images, per-edit
+`metrics.jsonl` and `summary.csv` (color accuracy, CIELAB color error, and
+LPIPS/MAE outside the edit mask).
+
 ## Shared data and model
 
 Use the team's existing copy at `/ocean/projects/cis260330p/shared` from

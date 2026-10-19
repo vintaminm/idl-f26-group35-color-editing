@@ -46,11 +46,15 @@ Datasets, weights and checkpoints stay out of git.
 
 ## Compute
 
-- Measured on the real model: 1.49 TFLOP per training sample, 44 TFLOP per edited image (30 steps with classifier-free guidance).
-- With published V100 throughput, the planned runs need about 16–20 V100 GPU-hours. We request 120–150 on PSC to cover reruns, extra seeds and interactive development (PSC bills allocated GPU time, idle or not).
-- The only unmeasured number is V100 training speed. First job on any GPU: `python scripts/benchmark_compute.py --batch-size 8` (about 10 minutes), then update the estimate.
-- PSC request (Piazza @388): compute estimate + recommendation letter from a TA mentor; send the mentor a one-sentence project summary.
+- Measured on a PSC V100-32GB (`scripts/benchmark_compute.py --batch-size 8`): training 14.6 samples/s at batch 8 for LoRA rank 4, 16 and 64 (peak memory 10.4 GiB); editing 0.75 images/s (30 steps with classifier-free guidance); VAE encoding 37 images/s.
+- Planned runs in `configs/compute_plan.json`: about 19 V100 GPU-hours (training 10, latent cache 1, evaluation generation 8). With reruns, extra seeds and interactive development, about 120.
 - Local Macs: batch 8 does not fit in 24 GB (attention matrices are stored in full on MPS); use batch 2 with gradient accumulation for debugging.
+
+## PSC (Bridges-2)
+
+- Project allocation `cis260330p`: 1,000 GPU SU and 500 GB Ocean. V100 and L40S cost 1 SU per GPU-hour, H100 2 SU.
+- Our accounts default to the course homework allocation (`cis250019p`), so every project job needs `-A cis260330p`. Setup, `newgrp` and the shared data layout are in the README.
+- Batch jobs use `scripts/psc/run.sbatch` on one L40S (`--gres=gpu:l40s-48:1`); V100 queues are usually longer.
 
 ## Open decisions
 
