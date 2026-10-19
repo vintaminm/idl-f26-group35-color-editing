@@ -137,6 +137,59 @@ dependency files. Clear notebook outputs before committing. Generated results
 and logs go in `results/` and are ignored by Git; datasets, checkpoints, and
 `.venv` are also ignored.
 
+## Shared data and model
+
+Use the team's existing copy at `/ocean/projects/cis260330p/shared` from
+any login or compute node. Members do not need to download or copy it into
+their own clones.
+
+| Path relative to `shared/` | Contents |
+|---|---|
+| `data/CelebAMask-HQ/CelebA-HQ-img/` | 30,000 photos, 1024 × 1024 |
+| `data/CelebAMask-HQ/CelebAMask-HQ-mask-anno/` | Binary masks, 512 × 512; 29,300 hair and 17,607 clothing masks |
+| `data/CelebAMask-HQ/` | Original attribute, pose, and CelebA mapping files, plus the dataset README |
+| `models/sd15-inpainting/` | SD 1.5 inpainting: fp16 weights, tokenizer, and pipeline configs |
+| `metadata/assets.json`, `metadata/setup.log` | Sources, pinned model revision, checksums, validation results, and setup log |
+
+Photo IDs run from 0 to 29999. For example, these paths select one photo
+and its hair mask; use `"cloth"` for clothing:
+
+```python
+from pathlib import Path
+
+data = Path("/ocean/projects/cis260330p/shared/data/CelebAMask-HQ")
+image_id, region = 0, "hair"
+image_path = data / "CelebA-HQ-img" / f"{image_id}.jpg"
+mask_path = (
+    data / "CelebAMask-HQ-mask-anno" / str(image_id // 2000)
+    / f"{image_id:05d}_{region}.png"
+)
+```
+
+Skip a region sample if its mask file is missing. Resize the photo to
+512 × 512 to align with the mask; use nearest-neighbor interpolation if
+resizing masks. White mask pixels mark the selected region to edit.
+Splits, color labels, and synthetic target pairs are generated separately;
+keep the original photos and annotations unchanged.
+
+Load the shared model on an allocated GPU node using the project's environment:
+
+```python
+import torch
+from diffusers import StableDiffusionInpaintPipeline
+
+pipe = StableDiffusionInpaintPipeline.from_pretrained(
+    "/ocean/projects/cis260330p/shared/models/sd15-inpainting",
+    variant="fp16",
+    dtype=torch.float16,
+    use_safetensors=True,
+    local_files_only=True,
+).to("cuda")
+```
+
+Only the fp16 safetensors variant is stored. `local_files_only=True` uses
+the shared files without downloading another copy.
+
 ## Repository layout
 
 | Folder | Contents |
