@@ -49,7 +49,7 @@ def curves(runs, out):
     print("saved", out)
 
 
-def grid(eval_run, out, methods, per_region=2):
+def grid(eval_run, out, methods, per_region=2, names=None):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -64,8 +64,11 @@ def grid(eval_run, out, methods, per_region=2):
                 ids.append(c["image_id"])
         ids = ids[:per_region]
         picked += [c for c in cases if c["region"] == region and c["image_id"] in ids][:per_region * 2]
+    if names:
+        by_name = {f"{c['image_id']:05d}-{c['region']}-{c['target_color']}": c for c in cases}
+        picked = [by_name[n] for n in names]
     columns = ["original", *methods]
-    fig, axes = plt.subplots(len(picked), len(columns), figsize=(1.6 * len(columns), 1.7 * len(picked)))
+    fig, axes = plt.subplots(len(picked), len(columns), figsize=(1.6 * len(columns), 1.7 * len(picked)), squeeze=False)
     data_root = Path(json.loads((eval_run / "config.json").read_text())["shared_root"]) / "data/CelebAMask-HQ"
     for i, c in enumerate(picked):
         name = f"{c['image_id']:05d}-{c['region']}-{c['target_color']}"
@@ -92,6 +95,8 @@ if __name__ == "__main__":
     parser.add_argument("--runs", nargs="*", default=[], help="label=path/to/training/run")
     parser.add_argument("--eval-run", default=None)
     parser.add_argument("--methods", nargs="*", default=["B0", "B1"])
+    parser.add_argument("--cases", nargs="*", default=None, help="e.g. 15769-hair-red")
+    parser.add_argument("--name", default="qualitative.png")
     parser.add_argument("--out-dir", required=True)
     args = parser.parse_args()
     out_dir = Path(args.out_dir)
@@ -99,4 +104,4 @@ if __name__ == "__main__":
     if args.runs:
         curves([tuple(r.split("=", 1)) for r in args.runs], out_dir / "loss_curves.png")
     if args.eval_run:
-        grid(args.eval_run, out_dir / "qualitative.png", args.methods)
+        grid(args.eval_run, out_dir / args.name, args.methods, names=args.cases)
