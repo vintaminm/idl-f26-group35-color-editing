@@ -1,0 +1,23 @@
+{
+  "shared_root": "/ocean/projects/cis260330p/shared",
+  "seed": 35,
+  "region": "hair",
+  "mask_dilation": 5,
+  "min_mask_fraction": 0.01,
+  "preview_samples": 4,
+  "baseline_samples": 2,
+  "target_color": "red",
+  "inference": {
+    "steps": 20,
+    "guidance_scale": 7.5
+  },
+  "training": {
+    "samples": 16,
+    "steps": 20,
+    "rank": 4,
+    "learning_rate": 0.0001,
+    "save_every": 10,
+    "supervision": "reconstruction"
+  },
+  "split_seed": 35
+}
