@@ -137,6 +137,48 @@ dependency files. Clear notebook outputs before committing. Generated results
 and logs go in `results/` and are ignored by Git; datasets, checkpoints, and
 `.venv` are also ignored.
 
+## Notebook workflow
+
+Use `configs/pilot.json` for the shared root, region, masks, and run size.
+`split_seed` fixes the data partition; `seed` controls training and generation.
+Start with notebook 01, then try 02 using the compute-node Jupyter kernel above.
+Run 03 after the data previews and base-model inference work.
+
+| Notebook | Flow | Default size |
+|---|---|---|
+| [01_data_preview](notebooks/01_data_preview.ipynb) | Photos, raw/dilated masks, provisional color labels, fixed splits | 4 previews; CPU |
+| [02_baseline_editing](notebooks/02_baseline_editing.ipynb) | B0 vs B1; optional saved LoRA | 2 validation images, 20 inference steps; GPU |
+| [03_lora_pilot](notebooks/03_lora_pilot.ipynb) | Reconstruction LoRA, save adapter, reload and compare | 16 train images, batch 1, rank 4, 20 training steps; GPU |
+
+Run cells in order. GPU functions check the kernel's project allocation and load
+only the existing local model. Text embeddings and latents are computed inside
+the training flow and cached in RAM for the selected samples. The initial color
+palette/labels need visual review; the pilot is a workflow check, not evidence of
+training quality. E1 synthetic supervision and formal evaluation come later.
+
+Every run gets a unique directory under the member's clone:
+
+```text
+results/<timestamp>_<username>_<kind>_<id>/
+  config.json, run.json       # settings, code/package versions, seed, job, sources
+  samples.json               # exact image IDs, regions, labels/prompts
+  splits.json, palette.json  # data-preview runs
+  previews/                  # data-preview grids
+  images/, images.jsonl      # comparison PNGs and per-output records
+  loss.jsonl                 # training progress
+  adapter/, checkpoints/     # final LoRA and intermediate adapter snapshots
+```
+
+Fields depend on the run type. Adapter snapshots do not include optimizer state
+for exact training resume. Comparisons retain raw and composited images separately;
+background copied from the original is postprocessing, not learned preservation.
+
+Code, configs, and cleared notebooks go to GitHub. Outputs stay in Ocean and are
+ignored by Git. To share a completed run, explicitly uncomment its final
+`publish_run` cell; it copies to `shared/runs/<username>/<run-id>/` and refuses to
+overwrite. Publish the training run to share its `adapter/`, and the comparison
+run to share its images. Original shared data and base weights remain unchanged.
+
 ## Shared data and model
 
 Use the team's existing copy at `/ocean/projects/cis260330p/shared` from
@@ -197,8 +239,8 @@ the shared files without downloading another copy.
 | `src/` | Data loading, color labels, LoRA training, editing, and metrics |
 | `configs/` | Experiment configurations |
 | `scripts/` | Training, editing, and evaluation entry points |
-| `notebooks/` | Exploration and GPU checks |
-| `results/` | Generated tables, plots, and sample grids (ignored by Git) |
+| `notebooks/` | Data preview, baseline comparison, LoRA pilot, and GPU checks |
+| `results/` | Personal runs: configs, images, losses, and adapters (ignored by Git) |
 
 Outside PSC, recreate a Python 3.11 environment, install a suitable PyTorch
 build, then use `requirements.txt`. The PSC lock targets Linux with CUDA 11.8.
