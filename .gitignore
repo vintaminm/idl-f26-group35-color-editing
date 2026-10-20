@@ -28,3 +28,9 @@ kaggle.json
 
 # OS
 .DS_Store
+
+# Generated results and scheduler logs
+/results/*
+!/results/.gitkeep
+slurm-*.out
+*.log
