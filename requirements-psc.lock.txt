@@ -135,3 +135,17 @@ webcolors==25.10.0
 webencodings==0.6.1
 websocket-client==1.9.2
 zipp==4.1.1
+# ArcFace identity metric (T1, swang69): insightface buffalo_l via ONNX Runtime on CPU.
+# Added with: python -m pip install insightface onnxruntime  (onnxruntime-gpu has no CUDA 11.8 provider here)
+flatbuffers==25.12.19
+imageio==2.38.1
+insightface==2.1
+lazy-loader==0.6
+ml_dtypes==0.6.0
+onnx==1.23.2
+onnxruntime==1.31.0
+opencv-python==5.0.0.93
+protobuf==7.36.2
+scikit-image==0.26.0
+scipy==1.17.1
+tifffile==2026.3.3
