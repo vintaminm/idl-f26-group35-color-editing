@@ -7,6 +7,7 @@ Uses one training photo for (a) and one test case with its Main output for (b). 
         --eval-run /ocean/projects/cis260330p/shared/runs/wsun8/20261019T163222971419Z_wsun8_evaluate_2745b5d9
 """
 import argparse
+import json
 from pathlib import Path
 
 import matplotlib
@@ -17,9 +18,10 @@ import numpy as np
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle
 from PIL import Image
 
-from color_editing.data import describe_sample, load_sample, recolor_lab
+from color_editing.cache import ImageRegions
+from color_editing.data import load_sample
 
-TRAIN_ID, TRAIN_COLOR = 8613, "red"      # training split, black hair
+TRAIN_ID = 7819                          # training split; its cached synthetic pair is black -> red
 TEST_ID, TEST_COLOR = 4727, "blue"       # test case, Main output is correct on both metrics
 INK, MUTED = "#222222", "#666666"
 FROZEN, FROZEN_EDGE = "#E8E8E8", "#888888"
@@ -57,12 +59,18 @@ def main():
     ap.add_argument("--data-root", default="/ocean/projects/cis260330p/shared/data/CelebAMask-HQ")
     ap.add_argument("--eval-run", default="/ocean/projects/cis260330p/shared/runs/wsun8/"
                                           "20261019T163222971419Z_wsun8_evaluate_2745b5d9")
+    ap.add_argument("--config", default="configs/main.json")
     ap.add_argument("--out", default="results/figures/method_diagram")
     args = ap.parse_args()
 
+    # the exact pair the latent cache builds for this image (same label, same seeded color draw, same recolor)
+    config = json.loads(Path(args.config).read_text())
+    built = ImageRegions(args.data_root, [TRAIN_ID], config)[0]
+    item = next(i for i in built["items"] if i["region"] == "hair")
+    source, target = item["source"], item["target"]
+    frac, rank = config["training"]["synthetic_fraction"], config["training"]["rank"]
+    synthetic = Image.fromarray(item["recolored"])
     train = load_sample(args.data_root, TRAIN_ID, "hair")
-    source = describe_sample(train)["source_color"]
-    synthetic = recolor_lab(train["image"], train["mask"], TRAIN_COLOR)
     test = load_sample(args.data_root, TEST_ID, "hair")
     output = Image.open(Path(args.eval_run) / "images" / "Main" / f"{TEST_ID:05d}-hair-{TEST_COLOR}.png").convert("RGB")
 
@@ -80,10 +88,10 @@ def main():
     box(ax, 27.5, 38, 16, 9, f"Label current color\nmedian CIELAB in $m$\n→ nearest: '{source}'")
     box(ax, 46.5, 38, 16, 9, "New color $c$ ≠ source,\nsampled from\n{red, blue, green,\npurple, pink, brown}")
     box(ax, 65.5, 38, 16, 9, "Recolor inside $m$:\nshift a*b* to $c$,\nkeep L* (shading)")
-    thumb(ax, synthetic, 85, 37, 11, f"Target $\\tilde{{x}}$, $c$ = {TRAIN_COLOR}\n\"…with {TRAIN_COLOR} hair\"")
+    thumb(ax, synthetic, 85, 37, 11, f"Target $\\tilde{{x}}$, $c$ = {target}\n\"…with {target} hair\"")
     for x0, x1 in ((24.5, 27.5), (43.5, 46.5), (62.5, 65.5), (81.5, 85)):
         arrow(ax, (x0, 42.5), (x1, 42.5))
-    ax.text(54.5, 36.4, f"Each sample: with prob. 0.5 the synthetic pair ($\\tilde{{x}}$, \"{TRAIN_COLOR} hair\"),\n"
+    ax.text(54.5, 36.4, f"Each sample: with prob. {frac:g} the synthetic pair ($\\tilde{{x}}$, \"{target} hair\"),\n"
                         f"otherwise reconstruction ($x$, \"{source} hair\"). E1: reconstruction only.",
             ha="center", va="top", fontsize=6.2, color=MUTED, linespacing=1.3)
     ax.plot([1, 99], [31.6, 31.6], color="#BBBBBB", lw=0.5)
@@ -140,7 +148,7 @@ def main():
 
     # legend
     lx = 82
-    for i, (fc, ec, label) in enumerate(((LORA, INK, "trained: LoRA, rank 16,\nattention q, k, v, out"),
+    for i, (fc, ec, label) in enumerate(((LORA, INK, f"trained: LoRA, rank {rank},\nattention q, k, v, out"),
                                          (FROZEN, FROZEN_EDGE, "frozen SD 1.5"))):
         ax.add_patch(Rectangle((lx, 24.5 - 4 * i), 2.0, 1.4, fc=fc, ec=ec, lw=0.4))
         ax.text(lx + 2.8, 25.2 - 4 * i, label, fontsize=5.8, va="center", linespacing=1.15)

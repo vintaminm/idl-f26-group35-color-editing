@@ -2,7 +2,8 @@
 
 Figure: `method_diagram.pdf/.png` (full text width, 7.0 x 3.64 in). Regenerate on Bridges-2 with
 `PYTHONPATH=src python scripts/plot_method_diagram.py` (defaults point at `shared/data/CelebAMask-HQ` and the
-first evaluation run). CPU only.
+first evaluation run). CPU only. The 0.5 fraction and rank 16 in the figure are read from
+`configs/main.json`.
 
 What it shows, and where in the code it comes from:
 
@@ -10,7 +11,8 @@ What it shows, and where in the code it comes from:
   mask, matched to the nearest palette color. A new color is drawn from `synthetic_colors`
   (red, blue, green, purple, pink, brown), never equal to the source. `recolor_lab` shifts the region's
   a*b* channels so their median matches the new color and keeps L* (lightness, so shading and texture stay).
-  Example: training image 8613, black -> red.
+  Example: training image 7819, black -> red. The script builds it with `cache.ImageRegions` and
+  `configs/main.json`, so it is exactly the pair in the training cache (same label, seeded color draw, recolor).
 - Mixing (`train.py`): each sample in a batch is the synthetic pair with probability `synthetic_fraction` = 0.5
   (target = recolored image, prompt names the new color), otherwise reconstruction (target = original, prompt
   names the source color). E1 sets the fraction to 0.
