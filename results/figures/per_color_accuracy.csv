@@ -1,0 +1,129 @@
+metric,region,target,method,n_seeds,n_cases,mean,sem,seeds,per_seed
+color_accuracy,cloth,all,B0,1,286,0.47202797202797203,nan,35,0.4720
+color_accuracy,cloth,blue,B0,1,99,0.696969696969697,nan,35,0.6970
+color_accuracy,cloth,red,B0,1,99,0.6666666666666666,nan,35,0.6667
+color_accuracy,cloth,white,B0,1,88,0.0,nan,35,0.0000
+color_accuracy,hair,all,B0,1,292,0.5513698630136986,nan,35,0.5514
+color_accuracy,hair,blond,B0,1,92,0.07608695652173914,nan,35,0.0761
+color_accuracy,hair,blue,B0,1,100,0.75,nan,35,0.7500
+color_accuracy,hair,red,B0,1,100,0.79,nan,35,0.7900
+color_accuracy,cloth,all,B1,1,286,0.11188811188811189,nan,35,0.1119
+color_accuracy,cloth,blue,B1,1,99,0.15151515151515152,nan,35,0.1515
+color_accuracy,cloth,red,B1,1,99,0.09090909090909091,nan,35,0.0909
+color_accuracy,cloth,white,B1,1,88,0.09090909090909091,nan,35,0.0909
+color_accuracy,hair,all,B1,1,292,0.05136986301369863,nan,35,0.0514
+color_accuracy,hair,blond,B1,1,92,0.021739130434782608,nan,35,0.0217
+color_accuracy,hair,blue,B1,1,100,0.01,nan,35,0.0100
+color_accuracy,hair,red,B1,1,100,0.12,nan,35,0.1200
+color_accuracy,cloth,all,E1,3,286,0.7377622377622378,0.04427370609142791,35 36 37,0.6538 0.8042 0.7552
+color_accuracy,cloth,blue,E1,3,99,0.7575757575757575,0.050505050505050504,35 36 37,0.6566 0.8081 0.8081
+color_accuracy,cloth,red,E1,3,99,0.6094276094276094,0.053872053872053856,35 36 37,0.5556 0.7172 0.5556
+color_accuracy,cloth,white,E1,3,88,0.8598484848484849,0.04967756457804545,35 36 37,0.7614 0.8977 0.9205
+color_accuracy,hair,all,E1,3,292,0.11187214611872147,0.030652332379218158,35 36 37,0.1644 0.1130 0.0582
+color_accuracy,hair,blond,E1,3,92,0.13768115942028986,0.04625777295218733,35 36 37,0.2283 0.1087 0.0761
+color_accuracy,hair,blue,E1,3,100,0.016666666666666666,0.006666666666666666,35 36 37,0.0100 0.0100 0.0300
+color_accuracy,hair,red,E1,3,100,0.18333333333333335,0.05783117190965824,35 36 37,0.2600 0.2200 0.0700
+color_accuracy,cloth,all,Main,3,286,0.9195804195804196,0.014557104891371563,35 36 37,0.9406 0.8916 0.9266
+color_accuracy,cloth,blue,Main,3,99,0.9158249158249158,0.032119165030873593,35 36 37,0.9798 0.8889 0.8788
+color_accuracy,cloth,red,Main,3,99,0.9797979797979798,0.015429547794464111,35 36 37,1.0000 0.9495 0.9899
+color_accuracy,cloth,white,Main,3,88,0.8560606060606061,0.02651515151515149,35 36 37,0.8295 0.8295 0.9091
+color_accuracy,hair,all,Main,3,292,0.7271689497716896,0.02019612558556406,35 36 37,0.7671 0.7021 0.7123
+color_accuracy,hair,blond,Main,3,92,0.13405797101449277,0.06410074642374686,35 36 37,0.2609 0.0543 0.0870
+color_accuracy,hair,blue,Main,3,100,1.0,0.0,35 36 37,1.0000 1.0000 1.0000
+color_accuracy,hair,red,Main,3,100,1.0,0.0,35 36 37,1.0000 1.0000 1.0000
+color_accuracy,cloth,all,data10,1,286,0.9125874125874126,nan,35,0.9126
+color_accuracy,cloth,blue,data10,1,99,0.8888888888888888,nan,35,0.8889
+color_accuracy,cloth,red,data10,1,99,1.0,nan,35,1.0000
+color_accuracy,cloth,white,data10,1,88,0.8409090909090909,nan,35,0.8409
+color_accuracy,hair,all,data10,1,292,0.6917808219178082,nan,35,0.6918
+color_accuracy,hair,blond,data10,1,92,0.03260869565217391,nan,35,0.0326
+color_accuracy,hair,blue,data10,1,100,0.99,nan,35,0.9900
+color_accuracy,hair,red,data10,1,100,1.0,nan,35,1.0000
+color_accuracy,cloth,all,data50,1,286,0.8776223776223776,nan,35,0.8776
+color_accuracy,cloth,blue,data50,1,99,0.898989898989899,nan,35,0.8990
+color_accuracy,cloth,red,data50,1,99,0.9292929292929293,nan,35,0.9293
+color_accuracy,cloth,white,data50,1,88,0.7954545454545454,nan,35,0.7955
+color_accuracy,hair,all,data50,1,292,0.7054794520547946,nan,35,0.7055
+color_accuracy,hair,blond,data50,1,92,0.06521739130434782,nan,35,0.0652
+color_accuracy,hair,blue,data50,1,100,1.0,nan,35,1.0000
+color_accuracy,hair,red,data50,1,100,1.0,nan,35,1.0000
+color_accuracy,cloth,all,rank4,1,286,0.9265734265734266,nan,35,0.9266
+color_accuracy,cloth,blue,rank4,1,99,0.9696969696969697,nan,35,0.9697
+color_accuracy,cloth,red,rank4,1,99,0.9292929292929293,nan,35,0.9293
+color_accuracy,cloth,white,rank4,1,88,0.875,nan,35,0.8750
+color_accuracy,hair,all,rank4,1,292,0.7876712328767124,nan,35,0.7877
+color_accuracy,hair,blond,rank4,1,92,0.32608695652173914,nan,35,0.3261
+color_accuracy,hair,blue,rank4,1,100,1.0,nan,35,1.0000
+color_accuracy,hair,red,rank4,1,100,1.0,nan,35,1.0000
+color_accuracy,cloth,all,rank64,1,286,0.9090909090909091,nan,35,0.9091
+color_accuracy,cloth,blue,rank64,1,99,0.9191919191919192,nan,35,0.9192
+color_accuracy,cloth,red,rank64,1,99,1.0,nan,35,1.0000
+color_accuracy,cloth,white,rank64,1,88,0.7954545454545454,nan,35,0.7955
+color_accuracy,hair,all,rank64,1,292,0.797945205479452,nan,35,0.7979
+color_accuracy,hair,blond,rank64,1,92,0.358695652173913,nan,35,0.3587
+color_accuracy,hair,blue,rank64,1,100,1.0,nan,35,1.0000
+color_accuracy,hair,red,rank64,1,100,1.0,nan,35,1.0000
+clip_color_accuracy,cloth,all,B0,1,286,0.6013986013986014,nan,35,0.6014
+clip_color_accuracy,cloth,blue,B0,1,99,0.7878787878787878,nan,35,0.7879
+clip_color_accuracy,cloth,red,B0,1,99,0.8787878787878788,nan,35,0.8788
+clip_color_accuracy,cloth,white,B0,1,88,0.07954545454545454,nan,35,0.0795
+clip_color_accuracy,hair,all,B0,1,292,0.7397260273972602,nan,35,0.7397
+clip_color_accuracy,hair,blond,B0,1,92,0.4782608695652174,nan,35,0.4783
+clip_color_accuracy,hair,blue,B0,1,100,0.82,nan,35,0.8200
+clip_color_accuracy,hair,red,B0,1,100,0.9,nan,35,0.9000
+clip_color_accuracy,cloth,all,B1,1,286,0.4020979020979021,nan,35,0.4021
+clip_color_accuracy,cloth,blue,B1,1,99,0.6161616161616161,nan,35,0.6162
+clip_color_accuracy,cloth,red,B1,1,99,0.29292929292929293,nan,35,0.2929
+clip_color_accuracy,cloth,white,B1,1,88,0.2840909090909091,nan,35,0.2841
+clip_color_accuracy,hair,all,B1,1,292,0.8664383561643836,nan,35,0.8664
+clip_color_accuracy,hair,blond,B1,1,92,0.9456521739130435,nan,35,0.9457
+clip_color_accuracy,hair,blue,B1,1,100,0.79,nan,35,0.7900
+clip_color_accuracy,hair,red,B1,1,100,0.87,nan,35,0.8700
+clip_color_accuracy,cloth,all,E1,3,286,0.8601398601398601,0.02126840045558819,35 36 37,0.8217 0.8951 0.8636
+clip_color_accuracy,cloth,blue,E1,3,99,0.9696969696969697,0.005831820900905316,35 36 37,0.9596 0.9697 0.9798
+clip_color_accuracy,cloth,red,E1,3,99,0.7508417508417509,0.03211916503087357,35 36 37,0.7475 0.8081 0.6970
+clip_color_accuracy,cloth,white,E1,3,88,0.8598484848484849,0.0550221175997498,35 36 37,0.7500 0.9091 0.9205
+clip_color_accuracy,hair,all,E1,3,292,0.8139269406392694,0.026698665670151837,35 36 37,0.8596 0.8151 0.7671
+clip_color_accuracy,hair,blond,E1,3,92,0.9746376811594203,0.009586055474871683,35 36 37,0.9891 0.9783 0.9565
+clip_color_accuracy,hair,blue,E1,3,100,0.7799999999999999,0.01000000000000001,35 36 37,0.7700 0.7700 0.8000
+clip_color_accuracy,hair,red,E1,3,100,0.7000000000000001,0.07810249675906651,35 36 37,0.8300 0.7100 0.5600
+clip_color_accuracy,cloth,all,Main,3,286,0.9510489510489512,0.006056121704786304,35 36 37,0.9406 0.9510 0.9615
+clip_color_accuracy,cloth,blue,Main,3,99,0.9629629629629629,0.013468013468013481,35 36 37,0.9495 0.9899 0.9495
+clip_color_accuracy,cloth,red,Main,3,99,0.9932659932659934,0.0033670033670033517,35 36 37,0.9899 0.9899 1.0000
+clip_color_accuracy,cloth,white,Main,3,88,0.8901515151515151,0.02109001652587128,35 36 37,0.8750 0.8636 0.9318
+clip_color_accuracy,hair,all,Main,3,292,0.9840182648401826,0.007990867579908674,35 36 37,0.9966 0.9692 0.9863
+clip_color_accuracy,hair,blond,Main,3,92,0.9637681159420289,0.026127183155536176,35 36 37,1.0000 0.9130 0.9783
+clip_color_accuracy,hair,blue,Main,3,100,0.9866666666666667,0.003333333333333336,35 36 37,0.9900 0.9900 0.9800
+clip_color_accuracy,hair,red,Main,3,100,1.0,0.0,35 36 37,1.0000 1.0000 1.0000
+clip_color_accuracy,cloth,all,data10,1,286,0.958041958041958,nan,35,0.9580
+clip_color_accuracy,cloth,blue,data10,1,99,0.9595959595959596,nan,35,0.9596
+clip_color_accuracy,cloth,red,data10,1,99,1.0,nan,35,1.0000
+clip_color_accuracy,cloth,white,data10,1,88,0.9090909090909091,nan,35,0.9091
+clip_color_accuracy,hair,all,data10,1,292,0.9554794520547946,nan,35,0.9555
+clip_color_accuracy,hair,blond,data10,1,92,0.9130434782608695,nan,35,0.9130
+clip_color_accuracy,hair,blue,data10,1,100,1.0,nan,35,1.0000
+clip_color_accuracy,hair,red,data10,1,100,0.95,nan,35,0.9500
+clip_color_accuracy,cloth,all,data50,1,286,0.951048951048951,nan,35,0.9510
+clip_color_accuracy,cloth,blue,data50,1,99,0.9797979797979798,nan,35,0.9798
+clip_color_accuracy,cloth,red,data50,1,99,0.98989898989899,nan,35,0.9899
+clip_color_accuracy,cloth,white,data50,1,88,0.875,nan,35,0.8750
+clip_color_accuracy,hair,all,data50,1,292,0.9794520547945206,nan,35,0.9795
+clip_color_accuracy,hair,blond,data50,1,92,0.9347826086956522,nan,35,0.9348
+clip_color_accuracy,hair,blue,data50,1,100,1.0,nan,35,1.0000
+clip_color_accuracy,hair,red,data50,1,100,1.0,nan,35,1.0000
+clip_color_accuracy,cloth,all,rank4,1,286,0.972027972027972,nan,35,0.9720
+clip_color_accuracy,cloth,blue,rank4,1,99,1.0,nan,35,1.0000
+clip_color_accuracy,cloth,red,rank4,1,99,1.0,nan,35,1.0000
+clip_color_accuracy,cloth,white,rank4,1,88,0.9090909090909091,nan,35,0.9091
+clip_color_accuracy,hair,all,rank4,1,292,0.9726027397260274,nan,35,0.9726
+clip_color_accuracy,hair,blond,rank4,1,92,0.9782608695652174,nan,35,0.9783
+clip_color_accuracy,hair,blue,rank4,1,100,0.94,nan,35,0.9400
+clip_color_accuracy,hair,red,rank4,1,100,1.0,nan,35,1.0000
+clip_color_accuracy,cloth,all,rank64,1,286,0.9405594405594405,nan,35,0.9406
+clip_color_accuracy,cloth,blue,rank64,1,99,0.9595959595959596,nan,35,0.9596
+clip_color_accuracy,cloth,red,rank64,1,99,1.0,nan,35,1.0000
+clip_color_accuracy,cloth,white,rank64,1,88,0.8522727272727273,nan,35,0.8523
+clip_color_accuracy,hair,all,rank64,1,292,1.0,nan,35,1.0000
+clip_color_accuracy,hair,blond,rank64,1,92,1.0,nan,35,1.0000
+clip_color_accuracy,hair,blue,rank64,1,100,1.0,nan,35,1.0000
+clip_color_accuracy,hair,red,rank64,1,100,1.0,nan,35,1.0000
