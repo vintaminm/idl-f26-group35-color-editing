@@ -149,3 +149,8 @@ protobuf==7.36.2
 scikit-image==0.26.0
 scipy==1.17.1
 tifffile==2026.3.3
+# FID/KID realism metric (T2, swang69): Inception-v3 features via torchmetrics/torch-fidelity.
+# Weights are fetched once on a login node into results/_torch_cache (TORCH_HOME in scripts/psc/run.sbatch).
+lightning-utilities==0.15.3
+torch-fidelity==0.4.0
+torchmetrics==1.9.0
