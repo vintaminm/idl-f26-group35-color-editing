@@ -95,7 +95,7 @@ def train(config, train_paths, val_paths):
     withheld = tr.get("withhold_color")
     pools = None
     if withheld:
-        # the withheld color word is never trained on, as a source or as a synthetic target
+        # never train on the withheld color word
         src_ok = torch.tensor([r["source_color"] != withheld for r in data["records"]], device=device)
         syn_ok = src_ok & torch.tensor([r["synthetic_color"] != withheld for r in data["records"]],
                                        device=device)
