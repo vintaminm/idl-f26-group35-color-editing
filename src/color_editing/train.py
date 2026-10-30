@@ -92,6 +92,14 @@ def train(config, train_paths, val_paths):
 
     data = load_cache(train_paths, device, tr.get("data_fraction", 1.0))
     val = load_cache(val_paths, device)
+    withheld = tr.get("withhold_color")
+    pools = None
+    if withheld:
+        # the withheld color word is never trained on, as a source or as a synthetic target
+        src_ok = torch.tensor([r["source_color"] != withheld for r in data["records"]], device=device)
+        syn_ok = src_ok & torch.tensor([r["synthetic_color"] != withheld for r in data["records"]],
+                                       device=device)
+        pools = {"recon": src_ok.nonzero().squeeze(1), "synthetic": syn_ok.nonzero().squeeze(1)}
     n_val = min(tr["val_samples"], len(val["records"]))
     val_gen = torch.Generator(device=device).manual_seed(config["split_seed"] + 1)
     # fixed noise and timesteps so the val curve only moves with the model
@@ -123,7 +131,9 @@ def train(config, train_paths, val_paths):
     n_params = sum(p.numel() for p in params)
     save_json(run / "data.json", {"train_region_samples": len(data["records"]),
                                   "train_images": len(data["image_latents"]),
-                                  "val_samples_used": n_val, "lora_parameters": n_params})
+                                  "val_samples_used": n_val, "lora_parameters": n_params,
+                                  "withheld_color": withheld,
+                                  "pool_sizes": {k: len(v) for k, v in pools.items()} if pools else None})
     print(f"run {run.name}: {len(data['records'])} train samples, {n_params:,} lora parameters", flush=True)
 
     def log_val(step):
@@ -137,8 +147,14 @@ def train(config, train_paths, val_paths):
         sums = {"recon": [0.0, 0], "synthetic": [0.0, 0]}
         started = time.perf_counter()
         for step in range(1, tr["steps"] + 1):
-            idx = torch.randint(0, len(data["records"]), (bs,), generator=gen, device=device)
-            synthetic = torch.rand(bs, generator=gen, device=device) < tr["synthetic_fraction"]
+            if pools:
+                synthetic = torch.rand(bs, generator=gen, device=device) < tr["synthetic_fraction"]
+                pick = {k: v[torch.randint(0, len(v), (bs,), generator=gen, device=device)]
+                        for k, v in pools.items()}
+                idx = torch.where(synthetic, pick["synthetic"], pick["recon"])
+            else:
+                idx = torch.randint(0, len(data["records"]), (bs,), generator=gen, device=device)
+                synthetic = torch.rand(bs, generator=gen, device=device) < tr["synthetic_fraction"]
             target, mask, masked, text = make_batch(data, idx, synthetic)
             noise = torch.randn(target.shape, generator=gen, device=device)
             t = torch.randint(0, scheduler.config.num_train_timesteps, (bs,), generator=gen, device=device)

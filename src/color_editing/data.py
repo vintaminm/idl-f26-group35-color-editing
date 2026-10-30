@@ -54,8 +54,7 @@ def _rgb_to_lab(rgb):
     ], axis=-1)
 
 
-def _lab_to_rgb(lab):
-    """Convert CIELAB D65 to uint8 sRGB, clipping out-of-gamut values."""
+def _lab_to_linear(lab):
     lab = np.asarray(lab, dtype=np.float64)
     fy = (lab[..., 0] + 16) / 116
     f = np.stack([fy + lab[..., 1] / 500, fy, fy - lab[..., 2] / 200], axis=-1)
@@ -63,7 +62,12 @@ def _lab_to_rgb(lab):
         f > _DELTA, f ** 3,
         3 * _DELTA ** 2 * (f - 4.0 / 29.0),
     ) * _D65
-    linear = xyz @ _XYZ_TO_RGB.T
+    return xyz @ _XYZ_TO_RGB.T
+
+
+def _lab_to_rgb(lab):
+    """Convert CIELAB D65 to uint8 sRGB, clipping out-of-gamut values."""
+    linear = _lab_to_linear(lab)
     srgb = np.where(
         linear <= 0.0031308, 12.92 * linear,
         1.055 * np.maximum(linear, 0) ** (1 / 2.4) - 0.055,
@@ -195,6 +199,37 @@ def recolor_lab(image, mask, target_color):
     region_lab[:, 1:] += target_lab[1:] - np.median(region_lab[:, 1:], axis=0)
     result = rgb.copy()
     result[selected] = _lab_to_rgb(region_lab)
+    return Image.fromarray(result)
+
+
+def recolor_lab_light(image, mask, target_color, steps=12):
+    if target_color not in COLOR_RGB:
+        raise ValueError(f"Unknown target color: {target_color}")
+    rgb = np.asarray(image.convert("RGB"))
+    selected = np.asarray(mask.convert("L")) > 127
+    if rgb.shape[:2] != selected.shape:
+        raise ValueError("image and mask sizes must match")
+    if not np.any(selected):
+        raise ValueError("cannot recolor an empty region")
+    region_lab = _rgb_to_lab(rgb[selected])
+    target_lab = _rgb_to_lab(np.asarray(COLOR_RGB[target_color]))
+    # move the median lightness as well, keep each pixel's offset so texture stays
+    region_lab += target_lab - np.median(region_lab, axis=0)
+    region_lab[:, 0] = np.clip(region_lab[:, 0], 0, 100)
+
+    def fits(scale):
+        linear = _lab_to_linear(region_lab * np.stack([np.ones_like(scale), scale, scale], axis=1))
+        return np.all((linear >= -1e-6) & (linear <= 1 + 1e-6), axis=1)
+
+    # out-of-gamut pixels lose chroma instead of having channels clipped
+    lo, hi = np.zeros(len(region_lab)), np.ones(len(region_lab))
+    for _ in range(steps):
+        mid = (lo + hi) / 2
+        ok = fits(mid)
+        lo, hi = np.where(ok, mid, lo), np.where(ok, hi, mid)
+    scale = np.where(fits(np.ones(len(region_lab))), 1.0, lo)
+    result = rgb.copy()
+    result[selected] = _lab_to_rgb(region_lab * np.stack([np.ones_like(scale), scale, scale], axis=1))
     return Image.fromarray(result)
 
 
