@@ -216,6 +216,48 @@ The evaluation writes `cases.json`, generated images, per-edit
 `metrics.jsonl` and `summary.csv` (color accuracy, CIELAB color error, and
 LPIPS/MAE outside the edit mask).
 
+## Final-phase runs and report numbers
+
+The final-phase experiments ran on V100s:
+
+- `scripts/psc/submit_final.sh` trains P25, P75, NoBlue, NoRed, Light and
+  LightP25, then submits one evaluation per group. It reads the latent cache
+  from the step above in `$CACHE` and builds the lightness-aware cache in
+  `$LIGHT_CACHE`.
+- `scripts/psc/eval_final.sbatch` evaluates the newest run of each named
+  training job, then runs the CLIP metrics and the grid figure.
+- `scripts/psc/metrics_final.sbatch` adds ArcFace and FID/KID for one
+  evaluation run.
+
+The published runs, and what each one tests, are listed in
+`shared/runs/wsun8/README.md`.
+
+```bash
+CACHE=/ocean/projects/cis260330p/$USER/cache bash scripts/psc/submit_final.sh
+sbatch -J eval-palette --export=ALL,CFG=configs/final-palette.json scripts/psc/eval_final.sbatch \
+  E1=train-e1 Main=train-main Light=train-light LightP25=train-light-p25
+sbatch -J metrics -d afterok:<eval job> scripts/psc/metrics_final.sbatch <eval job>
+```
+
+The report's tables and figures come from `scripts/final/`, reading the
+shared runs by default:
+
+```bash
+python scripts/final/table_rows.py
+PYTHONPATH=src python scripts/final/light_contact_sheet.py --out results/light_vs_b0.png
+python scripts/final/make_figures.py --out results/figures --sheet results/light_vs_b0.png
+PYTHONPATH=src python scripts/final/skin_chroma.py <eval run> [<eval run> ...]
+PYTHONPATH=src python scripts/final/rim_lightness.py <eval run> [<eval run> ...]
+```
+
+- `table_rows.py` prints the LaTeX rows of the result tables.
+- `make_figures.py` writes `tradeoff.pdf` and `synthetic_targets.pdf`. The
+  second is cropped from the validation contact sheet of B0 and
+  lightness-aware targets.
+- `skin_chroma.py` measures the change in skin chroma outside the edit mask.
+- `rim_lightness.py` measures the share of near-white pixels in a thin band
+  around the region border.
+
 ## Shared data and model
 
 Use the team's existing copy at `/ocean/projects/cis260330p/shared` from
@@ -275,7 +317,7 @@ the shared files without downloading another copy.
 |---|---|
 | `src/` | Data loading, color labels, LoRA training, editing, and metrics |
 | `configs/` | Experiment configurations |
-| `scripts/` | Training, editing, and evaluation entry points |
+| `scripts/` | Training, editing, and evaluation entry points; `final/` builds the final report's tables and figures |
 | `notebooks/` | Data preview, baseline comparison, LoRA pilot, and GPU checks |
 | `results/` | Personal runs: configs, images, losses, and adapters (ignored by Git) |
 
