@@ -6,7 +6,7 @@ import time
 import numpy as np
 from PIL import Image, ImageFilter
 
-from .data import COLOR_RGB, _load_mask, _mask_path, describe_sample, recolor_lab, split_ids
+from .data import COLOR_RGB, _load_mask, _mask_path, describe_sample, recolor_lab, recolor_lab_light, split_ids
 from .pipeline import prompt_for
 from .runs import require_gpu, save_json
 
@@ -46,7 +46,9 @@ class ImageRegions:
             rng = np.random.default_rng([cfg["seed"], image_id, cfg["regions"].index(region)])
             choices = [c for c in cfg["synthetic_colors"] if c != source]
             target = str(rng.choice(choices))
-            recolored = recolor_lab(image, mask, target)
+            # "lightness" also moves L, so dark hair can turn red or blond
+            recolor = recolor_lab_light if cfg.get("synthetic_recolor") == "lightness" else recolor_lab
+            recolored = recolor(image, mask, target)
             dilation = cfg["mask_dilation"]
             edit_mask = mask.filter(ImageFilter.MaxFilter(dilation)) if dilation > 1 else mask
             items.append({"region": region, "source": source, "target": target,

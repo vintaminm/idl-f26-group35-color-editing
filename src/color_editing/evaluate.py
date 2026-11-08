@@ -150,11 +150,12 @@ if __name__ == "__main__":
     parser.add_argument("--config", required=True)
     parser.add_argument("--adapter", nargs="*", default=[], help="name=path/to/adapter")
     parser.add_argument("--cases-per-region", type=int, default=None)
+    parser.add_argument("--skip-b1", action="store_true", help="B1 is deterministic; reuse an earlier run")
     args = parser.parse_args()
     cfg = json.loads(Path(args.config).read_text())
     if args.cases_per_region:
         cfg["evaluation"]["cases_per_region"] = args.cases_per_region
-    methods = [("B1", None)] + [tuple(a.split("=", 1)) for a in args.adapter]
+    methods = ([] if args.skip_b1 else [("B1", None)]) + [tuple(a.split("=", 1)) for a in args.adapter]
     run = create_run("evaluate", {**cfg, "adapters": dict(methods)})
     try:
         samples, cases = test_cases(cfg)
