@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>颜色判断 / Color annotation</title>
+<style>
+:root{font:16px/1.5 system-ui,sans-serif;color:#17212d;background:#f3f5f7}body{max-width:1100px;margin:auto;padding:20px}h1{font-size:1.5rem;margin-bottom:8px}button,input{font:inherit}button{cursor:pointer;border:1px solid #7e8da1;background:white;border-radius:6px;padding:10px 14px;margin:4px}button[aria-pressed="true"]{outline:3px solid #1763c0;background:#e4efff}button:disabled{opacity:.45;cursor:default}input{padding:8px;width:190px}section,.instructions{background:white;border:1px solid #d5dce5;border-radius:8px;padding:16px;margin:16px 0}.images{display:grid;grid-template-columns:1fr 1fr;gap:16px}.images figure{margin:0}.images img{width:100%;height:360px;object-fit:contain;background:#b0b0b0}.hint{color:#475568}.warning{color:#9a3200;font-weight:600}.good{color:#16672d}progress{width:100%;height:20px}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}#position{min-width:170px}#storageWarning{display:none}#itemTitle{font-size:1.2rem}.swatch{display:inline-block;width:16px;height:16px;margin-right:6px;border:1px solid #777;vertical-align:-2px}.choices button{min-width:100px}.small{font-size:.88rem}#importFile{width:auto}#finishNote{font-weight:600}@media(max-width:700px){.images{grid-template-columns:1fr}.images img{height:280px}body{padding:12px}}
+</style>
+<body>
+<h1>只判断圈出区域的颜色 / Judge the selected region's color</h1>
+<div class="instructions">
+  <p>不用懂机器学习。每张只回答：<strong>这个头发／衣服区域，你实际看见什么颜色？</strong>不要评价脸、背景或图片好不好看。</p>
+  <p>图片是局部放大图（区域外灰色不计入判断）；如果另有位置参考图，只用来确认看哪个区域。按主体颜色选一个；没有单一主色选「多色」，太暗、太小或拿不准选「无法判断」。头发的自然明暗和少量反光不算多色；红色和粉色请按实际观感区分。衣服另选「纯色／花纹／无法判断」，阴影和褶皱不算花纹。</p>
+  <p class="small">Choose the visible color, not the color you think was requested. Ignore greyed-out pixels. Choose Mixed if no single color dominates; choose Uncertain if you cannot judge. For clothing, shading and folds alone are not a pattern. Work independently and do not consult another annotator's answers.</p>
+  <p>先填自己的代号（如 <code>A01</code>，不要填真实姓名），逐张点选。完成后点「下载 CSV」，<strong>把下载的文件发回组织者</strong>。无需登录，无需安装或联网。建议关闭屏幕夜间偏黄模式，并保持同一屏幕设置。</p>
+</div>
+<section>
+  <div class="row"><label for="annotator">你的代号 / Your ID:</label><input id="annotator" maxlength="64" placeholder="A01" autocomplete="off"><button id="begin">开始／恢复 / Start</button></div>
+  <p id="packInfo" class="hint small"></p><p id="storageWarning" class="warning">浏览器无法保存进度。离开前请下载 CSV；重新打开后可导入该 CSV 继续。</p>
+</section>
+<main id="work" hidden>
+<section>
+  <div class="row"><button id="prev">← 上一张</button><span id="position"></span><button id="next">下一张 →</button><button id="nextMissing">跳到未完成</button></div>
+  <progress id="progress" value="0" max="1"></progress><p id="completion" class="hint"></p>
+  <h2 id="itemTitle"></h2>
+  <div class="images"><figure><img id="crop" alt="Selected region crop"><figcaption>只看非灰色区域 / Region to judge</figcaption></figure><figure id="contextFigure"><img id="context" alt="Region location in portrait"><figcaption>圈出的位置参考 / Location context</figcaption></figure></div>
+  <h3>1. 这个区域实际是什么颜色？ / Visible color?</h3><div id="colors" class="choices"></div>
+  <div id="patterns"><h3>2. 衣服有花纹吗？ / Clothing pattern?</h3><div id="patternChoices" class="choices"></div></div>
+  <p id="itemStatus" class="hint"></p>
+</section>
+<section>
+  <p id="finishNote"></p><button id="download">下载标注 CSV / Download answers</button>
+  <p class="small">CSV 是你的实际答案文件。下载后发回组织者，不要只发截图。网页保存只存在本浏览器；不会自动上传。</p>
+  <details><summary>从已有 CSV 恢复 / Import an earlier CSV</summary><p>同一任务包、同一代号的 CSV 才能导入。导入会更新该文件里已有的答案。</p><input id="importFile" type="file" accept=".csv,text/csv"></details>
+</section>
+</main>
+<script>
+'use strict';
+const PACK = /*__AUDIT_DATA__*/null;
+const HEADER=['pack_id','annotator_id','item_id','human_color','clothing_pattern'];
+const byId=id=>document.getElementById(id);
+let answers={}, annotator='', current=0, storageOK=true;
+const colors=[['black','黑 / Black','#191919'],['brown','棕 / Brown','#734b32'],['yellow','黄／金 / Yellow or blond','#d2b46e'],['red','红 / Red','#af2d28'],['blue','蓝 / Blue','#2d50b4'],['green','绿 / Green','#37784e'],['purple','紫 / Purple','#6e3c96'],['pink','粉 / Pink','#d26e96'],['white','白 / White','#ebebeb'],['gray','灰 / Gray','#808080'],['mixed','多色 / Mixed',null],['uncertain','无法判断 / Uncertain',null]];
+const patterns=[['plain','纯色 / Plain'],['patterned','花纹 / Patterned'],['uncertain','无法判断 / Uncertain']];
+function key(){return 'group35-audit-v1:'+PACK.pack_id+':'+annotator;}
+function validID(value){return /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/.test(value);}
+function save(){try{localStorage.setItem(key(),JSON.stringify(answers));localStorage.setItem('group35-audit-last:'+PACK.pack_id,annotator);}catch(e){storageOK=false;byId('storageWarning').style.display='block';}}
+function complete(item){const a=answers[item.item_id];return !!(a&&a.human_color&&(item.region==='hair'||patterns.some(p=>p[0]===a.clothing_pattern)));}
+function chooseColor(value){const item=PACK.items[current];answers[item.item_id]={...(answers[item.item_id]||{}),human_color:value,clothing_pattern:item.region==='hair'?'not_applicable':(answers[item.item_id]||{}).clothing_pattern||''};save();render();}
+function choosePattern(value){const id=PACK.items[current].item_id;answers[id]={...(answers[id]||{}),clothing_pattern:value};save();render();}
+function render(){const item=PACK.items[current],a=answers[item.item_id]||{},done=PACK.items.filter(complete).length;
+  byId('position').textContent=(current+1)+' / '+PACK.items.length+' · '+item.item_id;
+  byId('progress').value=done;byId('progress').max=PACK.items.length;
+  byId('completion').textContent='已完成 / Completed: '+done+' / '+PACK.items.length;
+  byId('itemTitle').textContent=item.region==='hair'?'请判断头发区域 / Hair region':'请判断衣服区域 / Clothing region';
+  byId('crop').src=item.image;byId('contextFigure').hidden=!item.context_image;byId('crop').closest('.images').style.gridTemplateColumns=item.context_image?'1fr 1fr':'1fr';if(item.context_image)byId('context').src=item.context_image;
+  byId('prev').disabled=current===0;byId('next').disabled=current===PACK.items.length-1;
+  byId('colors').replaceChildren();for(const [value,label,hex] of colors){const actual=value==='yellow'&&item.region==='hair'?'blond':value;const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(a.human_color===actual));if(hex){const s=document.createElement('span');s.className='swatch';s.style.background=hex;b.append(s);}b.append(document.createTextNode(value==='yellow'?(item.region==='hair'?'金／黄 / Blond':'黄 / Yellow'):label));b.onclick=()=>chooseColor(actual);byId('colors').append(b);}
+  byId('patterns').hidden=item.region==='hair';byId('patternChoices').replaceChildren();for(const [value,label]of patterns){const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed',String(a.clothing_pattern===value));b.onclick=()=>choosePattern(value);byId('patternChoices').append(b);}
+  byId('itemStatus').textContent=complete(item)?'本张已填好，可继续下一张。 / Saved. Continue to the next image.':'本张还未填完整。 / This image is not finished.';
+  byId('finishNote').textContent=done===PACK.items.length?'全部完成！请下载 CSV 并发回组织者。 / Finished. Download the CSV and return it.':'还剩 '+(PACK.items.length-done)+' 张。可先下载备份，之后继续。 / Images remaining: '+(PACK.items.length-done);
+  byId('finishNote').className=done===PACK.items.length?'good':'warning';}
+byId('begin').onclick=()=>{const value=byId('annotator').value.trim();if(!validID(value)){alert('代号用 1–64 个英文字母、数字、下划线、点或短横线，如 A01。不要填真实姓名。');return;}annotator=value;answers={};try{const raw=localStorage.getItem(key());if(raw)answers=JSON.parse(raw);}catch(e){storageOK=false;byId('storageWarning').style.display='block';}if(!answers||typeof answers!=='object'||Array.isArray(answers))answers={};const first=PACK.items.findIndex(i=>!complete(i));current=first<0?0:first;byId('work').hidden=false;save();render();};
+byId('prev').onclick=()=>{if(current>0){current--;render();}};byId('next').onclick=()=>{if(current<PACK.items.length-1){current++;render();}};byId('nextMissing').onclick=()=>{for(let n=1;n<=PACK.items.length;n++){const index=(current+n)%PACK.items.length;if(!complete(PACK.items[index])){current=index;render();return;}}alert('全部完成，请下载 CSV。');};
+function csvCell(value){return '"'+String(value??'').replaceAll('"','""')+'"';}
+byId('download').onclick=()=>{const done=PACK.items.filter(complete).length;if(done<PACK.items.length&&!confirm('尚未全部完成（'+done+'/'+PACK.items.length+'）。现在下载只是进度备份，不是完整提交。继续下载？'))return;const rows=[HEADER,...PACK.items.map(item=>{const a=answers[item.item_id]||{};return[PACK.pack_id,annotator,item.item_id,a.human_color||'',item.region==='hair'?(a.human_color?'not_applicable':''):a.clothing_pattern||''];})];const content='\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n')+'\r\n';const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='annotations_'+PACK.pack_id+'_'+annotator+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);};
+function parseCSV(text){text=text.replace(/^\uFEFF/,'');const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){cell+='"';i++;}else if(c==='"')quoted=false;else cell+=c;}else if(c==='"'){if(cell)throw Error('Invalid CSV quote');quoted=true;}else if(c===','){row.push(cell);cell='';}else if(c==='\r'||c==='\n'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x!==''))rows.push(row);row=[];cell='';}else cell+=c;}if(quoted)throw Error('CSV quote is not closed');if(cell||row.length){row.push(cell);rows.push(row);}return rows;}
+byId('importFile').onchange=async event=>{try{const file=event.target.files[0];if(!file)return;const rows=parseCSV(await file.text());if(JSON.stringify(rows.shift())!==JSON.stringify(HEADER))throw Error('CSV 表头不符合要求');const updates={};const itemMap=new Map(PACK.items.map(i=>[i.item_id,i]));for(const row of rows){if(row.length!==5)throw Error('CSV 列数不正确');const[pack,id,item,color,pattern]=row;if(pack!==PACK.pack_id||id!==annotator)throw Error('CSV 的任务包或标注人代号不匹配');if(!itemMap.has(item))throw Error('CSV 有不认识的图片编号');if(Object.hasOwn(updates,item))throw Error('CSV 有重复图片编号');const region=itemMap.get(item).region;const allowed=colors.map(c=>c[0]).map(c=>c==='yellow'&&region==='hair'?'blond':c);if(color&&!allowed.includes(color))throw Error('CSV 有不认识的颜色');if(pattern&&!((region==='hair'&&pattern==='not_applicable')||(region==='cloth'&&patterns.some(p=>p[0]===pattern))))throw Error('CSV 有不认识的花纹类别');updates[item]={human_color:color,clothing_pattern:pattern};}if(!confirm('导入 '+Object.keys(updates).length+' 行，覆盖这些图片当前的答案。继续？'))return;Object.assign(answers,updates);save();render();alert('已导入 / Imported');}catch(e){alert('导入失败 / Import failed: '+e.message);}finally{event.target.value='';}};
+if(!PACK||!Array.isArray(PACK.items)||!PACK.items.length){byId('packInfo').textContent='此文件是模板，尚未放入图片任务。请联系组织者。';byId('begin').disabled=true;}else{byId('packInfo').textContent='任务包 / Pack: '+PACK.pack_id+' · '+PACK.items.length+' 张。你的判断不会上传到网络。';try{byId('annotator').value=localStorage.getItem('group35-audit-last:'+PACK.pack_id)||'';}catch(e){byId('storageWarning').style.display='block';}}
+</script>
+</body>
+</html>

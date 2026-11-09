@@ -1,0 +1,10 @@
+# Extra evaluation packages; preserve the existing PSC environment with:
+# python -m pip install -c requirements-psc.lock.txt -r requirements-evaluation.txt
+# ArcFace deliberately uses CPU ONNX Runtime with this CUDA 11.8 environment.
+lpips==0.1.4
+matplotlib==3.11.2
+torchmetrics==1.9.0
+torch-fidelity==0.4.0
+insightface==2.1
+onnxruntime==1.31.0
+scipy==1.17.1

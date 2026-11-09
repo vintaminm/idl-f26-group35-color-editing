@@ -73,6 +73,7 @@ def build_cache(config, split, out_path, limit=None, shard=0, num_shards=1, batc
     import torch.nn.functional as F
     from diffusers import AutoencoderKL
     from torch.utils.data import DataLoader
+    from tqdm import tqdm
     from transformers import CLIPTextModel, CLIPTokenizer
 
     device = require_gpu()
@@ -111,8 +112,11 @@ def build_cache(config, split, out_path, limit=None, shard=0, num_shards=1, batc
     sample_image, masks, masked_latents, synth_latents = [], [], [], []
     records = []
     started = time.perf_counter()
-    with torch.inference_mode():
-        for step, batch in enumerate(loader):
+    with torch.inference_mode(), tqdm(
+        loader, desc=f"Cache {split} shard {shard + 1}/{num_shards}",
+        unit="batch", dynamic_ncols=True, mininterval=1.0,
+    ) as progress:
+        for step, batch in enumerate(progress):
             batch = [b for b in batch if b["items"]]
             if not batch:
                 continue
@@ -141,10 +145,13 @@ def build_cache(config, split, out_path, limit=None, shard=0, num_shards=1, batc
             masked_latents.append(masked_lat.cpu())
             synth_latents.append(synth_lat.cpu())
             masks.append(torch.stack(small).cpu())
+            rate = len(image_ids) / (time.perf_counter() - started)
+            progress.set_postfix(images=len(image_ids), regions=len(records), images_s=f"{rate:.1f}",
+                                 refresh=False)
             if step % 50 == 0:
-                rate = len(image_ids) / (time.perf_counter() - started)
-                print(f"{len(image_ids)}/{len(ids)} images, {len(records)} region samples, {rate:.1f} images/s",
-                      flush=True)
+                progress.write(
+                    f"{len(image_ids)}/{len(ids)} images, {len(records)} region samples, {rate:.1f} images/s"
+                )
 
     cache = {
         "image_ids": torch.tensor(image_ids),

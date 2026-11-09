@@ -135,7 +135,8 @@ terminal; `-A cis260330p` charges GPU time to the project account.
 Each member works on a Git branch and pushes code, notebooks, configs, and
 dependency files. Clear notebook outputs before committing. Generated results
 and logs go in `results/` and are ignored by Git; datasets, checkpoints, and
-`.venv` are also ignored.
+`.venv` are also ignored. Reports, video source files, private notes and backup
+archives are not part of the public code submission.
 
 ## Notebook workflow
 
@@ -154,7 +155,8 @@ Run cells in order. GPU functions check the kernel's project allocation and load
 only the existing local model. Text embeddings and latents are computed inside
 the training flow and cached in RAM for the selected samples. The initial color
 palette/labels need visual review; the pilot is a workflow check, not evidence of
-training quality. E1 synthetic supervision and formal evaluation come later.
+training quality. The full training and final follow-up workflows below
+implement the formal experiments; E1 is the reconstruction-only control.
 
 Every run gets a unique directory under the member's clone:
 
@@ -218,6 +220,8 @@ LPIPS/MAE outside the edit mask).
 
 ## Final-phase runs and report numbers
 
+### Published final-phase experiments
+
 The final-phase experiments ran on V100s:
 
 - `scripts/psc/submit_final.sh` trains P25, P75, NoBlue, NoRed, Light and
@@ -257,6 +261,17 @@ PYTHONPATH=src python scripts/final/rim_lightness.py <eval run> [<eval run> ...]
 - `skin_chroma.py` measures the change in skin chroma outside the edit mask.
 - `rim_lightness.py` measures the share of near-white pixels in a thin band
   around the region border.
+
+### Follow-up seeds, CNN and human audit
+
+The follow-up workflow adds three seeds each for NoRed and P75, resumable
+image generation and scoring, a weakly supervised CNN color evaluator, and an
+offline human color audit. See [docs/final-workflow.md](docs/final-workflow.md)
+for commands, completed experiment scope, result summaries and artifact requirements.
+
+Training, evaluation and annotation outputs stay in ignored `results/`.
+Generated reports and video materials are shared separately from this source
+repository.
 
 ## Shared data and model
 
@@ -317,8 +332,9 @@ the shared files without downloading another copy.
 |---|---|
 | `src/` | Data loading, color labels, LoRA training, editing, and metrics |
 | `configs/` | Experiment configurations |
-| `scripts/` | Training, editing, and evaluation entry points; `final/` builds the final report's tables and figures |
+| `scripts/` | Training, evaluation, report figures, the color CNN, and the offline human audit |
 | `notebooks/` | Data preview, baseline comparison, LoRA pilot, and GPU checks |
+| `docs/` | Project plan and final follow-up reproduction instructions |
 | `results/` | Personal runs: configs, images, losses, and adapters (ignored by Git) |
 
 Outside PSC, recreate a Python 3.11 environment, install a suitable PyTorch

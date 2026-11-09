@@ -35,3 +35,16 @@ kaggle.json
 !/results/.gitkeep
 slurm-*.out
 *.log
+
+# Local report/video authoring, private archives and backups
+/11785_Project/
+/backups/
+/local_archive/
+
+# TeX build products
+*.aux
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+*.out

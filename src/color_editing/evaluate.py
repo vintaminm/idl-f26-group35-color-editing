@@ -44,9 +44,10 @@ def case_name(case):
     return f"{case['image_id']:05d}-{case['region']}-{case['target_color']}"
 
 
-def generate(config, samples, cases, run, methods):
+def generate(config, samples, cases, run, methods, resume=False):
     import torch
     from diffusers import StableDiffusionInpaintPipeline
+    from tqdm import tqdm
 
     device = require_gpu()
     model_dir = Path(config["shared_root"]) / "models/sd15-inpainting"
@@ -56,14 +57,33 @@ def generate(config, samples, cases, run, methods):
     pipe.set_progress_bar_config(disable=True)
     inf = config["inference"]
     bs = config["evaluation"].get("batch_size", 4)
-    for method, adapter in methods:
+    for method, adapter in tqdm(methods, desc="Generate methods", unit="method",
+                                dynamic_ncols=True, mininterval=1.0):
         if adapter:
             pipe.load_lora_weights(str(adapter), local_files_only=True)
         out_dir = run / "images" / method
         out_dir.mkdir(parents=True, exist_ok=True)
         started = time.perf_counter()
-        for start in range(0, len(cases), bs):
+        batches = tqdm(range(0, len(cases), bs), desc=f"{method} generation", unit="batch",
+                       dynamic_ncols=True, mininterval=1.0)
+        for start in batches:
             batch = cases[start:start + bs]
+            if resume:
+                complete = True
+                for c in batch:
+                    try:
+                        with Image.open(out_dir / f"{case_name(c)}.png") as saved:
+                            if saved.size != (512, 512):
+                                complete = False
+                                break
+                            saved.verify()
+                    except (OSError, SyntaxError, ValueError):
+                        complete = False
+                        break
+                if complete:
+                    batches.set_postfix(cases=f"{start + len(batch)}/{len(cases)}", resumed=True,
+                                        refresh=False)
+                    continue
             picked = [samples[(c["image_id"], c["region"])] for c in batch]
             with torch.inference_mode():
                 images = pipe(prompt=[c["prompt"] for c in batch],
@@ -75,9 +95,11 @@ def generate(config, samples, cases, run, methods):
                               ).images
             for c, image in zip(batch, images):
                 image.convert("RGB").save(out_dir / f"{case_name(c)}.png")
+            batches.set_postfix(cases=f"{start + len(batch)}/{len(cases)}", resumed=False,
+                                refresh=False)
             if start % (bs * 25) == 0:
-                print(f"{method}: {start + len(batch)}/{len(cases)} "
-                      f"{(time.perf_counter() - started) / (start + len(batch)):.2f}s/image", flush=True)
+                batches.write(f"{method}: {start + len(batch)}/{len(cases)} "
+                              f"{(time.perf_counter() - started) / (start + len(batch)):.2f}s/image")
         if adapter:
             pipe.unload_lora_weights()
     del pipe
@@ -87,6 +109,7 @@ def generate(config, samples, cases, run, methods):
 def score(config, samples, cases, run, method_names):
     import lpips
     import torch
+    from tqdm import tqdm
 
     device = require_gpu()
     metric = lpips.LPIPS(net="alex", verbose=False).to(device).eval()
@@ -96,8 +119,10 @@ def score(config, samples, cases, run, method_names):
         return (x / 127.5 - 1.0).to(device)
 
     rows = []
-    for method in ["B0", *method_names]:
-        for c in cases:
+    for method in tqdm(["B0", *method_names], desc="Score methods", unit="method",
+                       dynamic_ncols=True, mininterval=1.0):
+        for c in tqdm(cases, desc=f"{method} metrics", unit="image",
+                      dynamic_ncols=True, mininterval=1.0):
             sample = samples[(c["image_id"], c["region"])]
             if method == "B0":
                 out = recolor_lab(sample["image"], sample["mask"], c["target_color"])
