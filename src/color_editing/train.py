@@ -1,6 +1,7 @@
 import argparse
 import json
 from pathlib import Path
+import sys
 import time
 
 from .pipeline import LORA_TARGETS, _save_adapter
@@ -83,6 +84,7 @@ def train(config, train_paths, val_paths):
     import torch
     from diffusers import DDPMScheduler, UNet2DConditionModel
     from peft import LoraConfig
+    from tqdm import tqdm
 
     device = require_gpu()
     tr = config["training"]
@@ -136,16 +138,26 @@ def train(config, train_paths, val_paths):
                                   "pool_sizes": {k: len(v) for k, v in pools.items()} if pools else None})
     print(f"run {run.name}: {len(data['records'])} train samples, {n_params:,} lora parameters", flush=True)
 
+    progress = None
+    terminal_progress = sys.stderr.isatty()
+
     def log_val(step):
         v = validation_loss(unet, scheduler, val, fixed)
         append_jsonl(run / "val.jsonl", {"step": step, **v})
-        print(f"step {step} val recon {v['recon']:.5f} synthetic {v['synthetic']:.5f}", flush=True)
+        message = f"step {step} val recon {v['recon']:.5f} synthetic {v['synthetic']:.5f}"
+        if progress is None:
+            print(message, flush=True)
+        else:
+            progress.write(message, file=sys.stdout)
 
     try:
         log_val(0)
         bs = tr["batch_size"]
         sums = {"recon": [0.0, 0], "synthetic": [0.0, 0]}
         started = time.perf_counter()
+        progress = tqdm(total=tr["steps"], desc=f"{config['name']} (seed {config['seed']})",
+                        unit="step", dynamic_ncols=True, mininterval=0.5,
+                        file=sys.stderr, disable=not terminal_progress)
         for step in range(1, tr["steps"] + 1):
             if pools:
                 synthetic = torch.rand(bs, generator=gen, device=device) < tr["synthetic_fraction"]
@@ -181,18 +193,23 @@ def train(config, train_paths, val_paths):
                 row["loss"] = total / sum(v[1] for v in sums.values())
                 append_jsonl(run / "loss.jsonl", row)
                 sums = {"recon": [0.0, 0], "synthetic": [0.0, 0]}
-            if step % 500 == 0:
+                progress.set_postfix(loss=f"{row['loss']:.5f}", refresh=False)
+            if step % 500 == 0 and not terminal_progress:
                 print(f"step {step}/{tr['steps']} loss {row['loss']:.5f} "
                       f"{(time.perf_counter() - started) / step:.3f}s/step", flush=True)
             if step % tr["val_every"] == 0:
                 log_val(step)
             if step % tr["save_every"] == 0 and step < tr["steps"]:
                 _save_adapter(unet, run / "checkpoints" / f"step-{step:06d}", step, config)
+            progress.update(1)
+        progress.close()
         _save_adapter(unet, run / "adapter", tr["steps"], config)
         finish_run(run, steps=tr["steps"], lora_parameters=n_params,
                    peak_cuda_gib=torch.cuda.max_memory_allocated() / 1024 ** 3,
                    seconds=time.perf_counter() - started, gpu=torch.cuda.get_device_name(0))
     except BaseException as error:
+        if progress is not None:
+            progress.close()
         finish_run(run, status="interrupted" if isinstance(error, KeyboardInterrupt) else "failed",
                    error=f"{type(error).__name__}: {error}")
         raise
